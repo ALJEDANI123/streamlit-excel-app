@@ -41,13 +41,18 @@ if uploaded_file:
     # 🔹 حذف الصفوف بناءً على عدد الكراتين
     cartons_col = st.selectbox("📦 اختر عمود عدد الكراتين", df.columns)
     if cartons_col:
-        df[cartons_col] = pd.to_numeric(df[cartons_col], errors="coerce")  # تحويل القيم إلى أرقام
+        df[cartons_col] = pd.to_numeric(df[cartons_col], errors="coerce")  # تحويل القيم إلى أرقام مع تجاهل الأخطاء
         rows_before = len(df)
-        df = df[df[cartons_col] >= 10]  # الاحتفاظ بالصفوف التي عدد الكراتين فيها 10 أو أكثر
-        rows_after = len(df)
-        if rows_before > rows_after:
+        df_filtered = df[df[cartons_col].notna() & (df[cartons_col] >= 10)]  # الاحتفاظ بالصفوف التي تحتوي على قيم عددية >= 10
+
+        # ضمان عدم حذف جميع الصفوف
+        if not df_filtered.empty:
+            df = df_filtered
+            rows_after = len(df)
             st.success(f"🗑️ تم حذف {rows_before - rows_after} صفوف (عدد الكراتين أقل من 10).")
             save_data(df)  # حفظ التعديلات
+        else:
+            st.warning("⚠️ لا يمكن حذف جميع الصفوف، تحقق من البيانات المدخلة.")
 
     # 🔹 عرض الجدول مع إمكانية حذف الصفوف يدويًا
     st.subheader("✏️ قم بحذف الصفوف مباشرة من الجدول:")
