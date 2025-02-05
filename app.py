@@ -38,6 +38,17 @@ if uploaded_file:
         df = df.drop(columns=cols_to_remove, errors="ignore")
         save_data(df)  # حفظ التعديلات
 
+    # 🔹 حذف الصفوف بناءً على عدد الكراتين
+    cartons_col = st.selectbox("📦 اختر عمود عدد الكراتين", df.columns)
+    if cartons_col:
+        df[cartons_col] = pd.to_numeric(df[cartons_col], errors="coerce")  # تحويل القيم إلى أرقام
+        rows_before = len(df)
+        df = df[df[cartons_col] >= 10]  # الاحتفاظ بالصفوف التي عدد الكراتين فيها 10 أو أكثر
+        rows_after = len(df)
+        if rows_before > rows_after:
+            st.success(f"🗑️ تم حذف {rows_before - rows_after} صفوف (عدد الكراتين أقل من 10).")
+            save_data(df)  # حفظ التعديلات
+
     # 🔹 عرض الجدول مع إمكانية حذف الصفوف يدويًا
     st.subheader("✏️ قم بحذف الصفوف مباشرة من الجدول:")
     edited_df = st.data_editor(df, num_rows="dynamic", key="table_editor")
