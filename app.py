@@ -27,24 +27,31 @@ uploaded_file = st.file_uploader("📂 رفع ملف Excel", type=["xlsx", "xls"
 
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
-    
-    # استرجاع الأعمدة المحذوفة سابقًا
+
+    # استرجاع الأعمدة المحذوفة مسبقًا
     if "cols_to_remove" in settings:
         df = df.drop(columns=settings["cols_to_remove"], errors="ignore")
 
-    # استرجاع الصفوف المحذوفة سابقًا
+    # استرجاع الصفوف المحذوفة مسبقًا
     if "rows_to_remove" in settings:
         df = df.drop(index=settings["rows_to_remove"], errors="ignore")
 
-    st.subheader("✏️ قم بالتعديل مباشرة على الجدول:")
+    # خيار لحذف الأعمدة
+    cols_to_remove = st.multiselect("🗑️ اختر الأعمدة لحذفها", df.columns, default=settings.get("cols_to_remove", []))
+    if cols_to_remove:
+        df = df.drop(columns=cols_to_remove, errors="ignore")
+        settings["cols_to_remove"] = cols_to_remove
+        save_settings(settings)
+
+    # عرض الجدول مع إمكانية حذف الصفوف يدويًا
+    st.subheader("✏️ قم بحذف الصفوف مباشرة من الجدول:")
     edited_df = st.data_editor(df, num_rows="dynamic", key="table_editor")
 
-    # تحديث الإعدادات عند التعديل
-    settings["cols_to_remove"] = list(set(df.columns) - set(edited_df.columns))  # الأعمدة المحذوفة
-    settings["rows_to_remove"] = list(set(df.index) - set(edited_df.index))  # الصفوف المحذوفة
+    # تحديد الصفوف المحذوفة
+    deleted_rows = list(set(df.index) - set(edited_df.index))
+    if deleted_rows:
+        settings["rows_to_remove"] = deleted_rows
+        save_settings(settings)
 
-    # حفظ الإعدادات
-    save_settings(settings)
-
-    # زر لتنزيل الملف المعدل
+    # زر لتحميل الملف بعد التعديلات
     st.download_button("📥 تحميل الملف بعد التعديل", edited_df.to_csv(index=False).encode("utf-8"), "modified_data.csv", "text/csv")
